@@ -1,0 +1,36 @@
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb_lights_store
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./data:/data/db
+    networks:
+      - mynetwork
+  redis:
+    image: redis:latest
+    container_name: redis_lights_store
+    volumes:
+      - ./data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - mynetwork
+  miniodb:
+    image: quay.io/minio/minio
+    container_name: minio_light_store
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: prj_python
+      MINIO_ROOT_PASSWORD: 12345678
+    volumes:
+      - ~/minio/data:/data
+    command: server --console-address ":9001" /data
+    networks:
+      - mynetwork
+
+networks:
+  mynetwork:

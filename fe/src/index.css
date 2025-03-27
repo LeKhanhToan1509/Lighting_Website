@@ -1,0 +1,38 @@
+@font-face {
+    font-family: 'Krona One';
+    src: url('https://fonts.googleapis.com/css2?family=Krona+One&display=swap');
+}
+
+@font-face {
+    font-family: 'Montserrat';
+    src: url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+}
+
+@font-face {
+    font-family: 'Inter';
+    src: url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+}
+
+@font-face {
+    font-family: 'Mako';
+    src: url('https://fonts.googleapis.com/css2?family=Mako&display=swap');
+}
+@font-face {
+    font-family: 'Lekton';
+    src: url('https://fonts.googleapis.com/css2?family=Lekton:ital,wght@0,400;0,700;1,400&display=swap');
+}
+@font-face {
+    font-family: 'Markazi';
+    src: url('https://fonts.googleapis.com/css2?family=Markazi+Text:wght@400..700&display=swap');
+}
+
+@import "tailwindcss";
+
+@theme{
+    --font-krona: 'Krona One', sans-serif;
+    --font-montserrat: 'Montserrat', sans-serif;
+    --font-inter: 'Inter', sans-serif;
+    --font-mako: 'Mako', sans-serif;
+    --font-lekton: 'Lekton', sans-serif;
+    --font-markazi: 'Markazi', sans-serif;
+}
