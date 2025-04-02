@@ -7,6 +7,7 @@ import redisClient from "../dbs/redisdb.js";
 import jwt from "jsonwebtoken"; 
 import sendEmail from "../helpers/sendEmail.js";
 import dotenv from 'dotenv';
+import RedisKeys from "../utils/redisKeys.js";
 dotenv.config();
 
 const getRandomSixDigit = () => {
@@ -35,19 +36,19 @@ export default class accessService {
         const subject = 'Email verification';
         const text = `Your code is: ${code}`;
         const info = await sendEmail(subject, text, email);
-        redisClient.set(`pin_${email}`, code, 'EX', 60);
+        redisClient.set(RedisKeys.userKey.pinVerify(email), code, 'EX', 60);
         return info;
 
     };
 
     static verifyEmail = async (payload) => {
         const { code, ...account } = payload;
-        const codeToVerify = await redisClient.get(`pin_${account.email}`);
+        const codeToVerify = await redisClient.get(RedisKeys.userKey.pinVerify(account.email));
 
         if (codeToVerify !== code) {
             throw new Error('Invalid code');
         }
-        await redisClient.del(`pin_${account.email}`);
+        await redisClient.del(RedisKeys.userKey.pinVerify(account.email));
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(account.password, salt);
         const { password, ...info } = account;
@@ -80,7 +81,7 @@ export default class accessService {
         const accessToken = accessHelper.generateToken(account, process.env.JWT_ACCESS_TOKEN, '2h');
         const refreshToken = accessHelper.generateToken(account, process.env.JWT_REFRESH_TOKEN, '7d');
         
-        const redisRefreshKey = `refresh_${account._id}`;
+        const redisRefreshKey = RedisKeys.userKey.refreshToken(account._id);
 
         await redisClient.del(redisRefreshKey);
 
@@ -117,7 +118,7 @@ export default class accessService {
     
         console.log(`account: ${JSON.stringify(account)}`);
     
-        const redisRefreshKey = `refresh_${account._id}`;
+        const redisRefreshKey = RedisKeys.userKey.refreshToken(account._id);
         const storedRefreshToken = await redisClient.get(redisRefreshKey);
         
         if (!storedRefreshToken || storedRefreshToken !== refreshToken) {
@@ -132,7 +133,6 @@ export default class accessService {
         return { newAccessToken, newRefreshToken };
     }
     
-
     static signOut = async (payload) => {
         const { refreshToken, account } = payload;
     
@@ -152,7 +152,7 @@ export default class accessService {
             throw new Error('Unauthorized');
         }
     
-        const redisRefreshKey = `refresh_${account._id}`;
+        const redisRefreshKey = RedisKeys.userKey.refreshToken(account._id);
         
         const storedRefreshToken = await redisClient.get(redisRefreshKey);
         if (storedRefreshToken !== refreshToken) {
@@ -161,13 +161,14 @@ export default class accessService {
     
         await redisClient.del(redisRefreshKey);
     }
+
     static async resetPassword(account) {
         const { email } = account;
         const code = getRandomSixDigit();
         const subject = 'Reset password';
         const text = `Your code is: ${code}`;
         const info = await sendEmail(subject, text, email);
-        redisClient.set(`pin_${email}`, code, 'EX', 60);
+        redisClient.set(RedisKeys.userKey.pinVerify(email), code, 'EX', 60);
         return info;
     }
 
@@ -177,13 +178,13 @@ export default class accessService {
         const subject = 'Resent pin';
         const text = `Your code is: ${code}`;
         const info = await sendEmail(subject, text, email);
-        redisClient.set(`pin_${email}`, code, 'EX', 60);
+        redisClient.set(RedisKeys.userKey.pinVerify(email), code, 'EX', 60);
         return info;
     }
     
     static verifyPin = async (payload) => {
         const { email, code } = payload;
-        const codeToVerify = await redisClient.get(`pin_${email}`);
+        const codeToVerify = await redisClient.get(RedisKeys.userKey.pinVerify(email));
         if(!codeToVerify) {
             throw new Error('Code expired');
         }
@@ -191,13 +192,13 @@ export default class accessService {
         if (codeToVerify !== code) {
             throw new Error('Invalid code');
         }
-        await redisClient.del(`pin_${email}`);
+        await redisClient.del(RedisKeys.userKey.pinVerify(email));
         
-
         return {
             message: 'Verify pin successfully'
         };
     }
+
     static forgotPassWord = async (payload) => {
         const { email, newPassword } = payload;
         const account = await AccountModel

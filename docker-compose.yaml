@@ -28,9 +28,25 @@ services:
       MINIO_ROOT_PASSWORD: 12345678
     volumes:
       - ~/minio/data:/data
+    
     command: server --console-address ":9001" /data
     networks:
       - mynetwork
+
+  # fe_light_store:
+  #   build:
+  #     context: .
+  #     dockerfile: dockers/feDockerfile
+  #   container_name: fe_light_store
+  #   ports:
+  #     - "5173:5173"
+  #   command: npm run dev
+  #   environment:
+  #     - HOST=0.0.0.0
+  #   volumes:
+  #     - ./fe:/app     
+  #   networks:
+  #     - mynetwork
 
 networks:
   mynetwork:

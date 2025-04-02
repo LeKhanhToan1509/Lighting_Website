@@ -22,7 +22,7 @@ const Shop = () => {
           'token': `Bearer ${user.accessToken}`
         }
       });
-      setProducts(res.data.products);
+      setProducts(res.data.products.reverse());
     };
     fetchProducts();
   }, []);

@@ -1,5 +1,4 @@
 import PaymentModel from '../models/payment.model.js';
-import UserModel from '../models/account.model.js';
 // import { v4 as uuidv4 } from 'uuid';
 import paymentHelper from '../helpers/payment.js';
 import MBBank from '../dbs/mbBank.js';

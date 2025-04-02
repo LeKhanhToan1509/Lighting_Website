@@ -1,7 +1,8 @@
 import Account from "../models/account.model.js";
 import redisClient from "../dbs/redisdb.js";
+import RedisKeys from "../utils/redisKeys.js";
 
-class ProductService {
+class userService {
     static async getDetailUser(payload) {
         const { id } = payload;
         if (!id) {
@@ -9,8 +10,7 @@ class ProductService {
         }
 
         try {
-            const cachedUser = await redisClient.get(`${id}_profile`);
-            console.log(`cachedUser: ${cachedUser}`);
+            const cachedUser = await redisClient.get(RedisKeys.userKey.profile(id));
             if (cachedUser) {
                 return JSON.parse(cachedUser);
             }
@@ -19,7 +19,7 @@ class ProductService {
             if (!user) {
                 throw new Error('User not found');
             }
-            await redisClient.set(`${id}_profile`, JSON.stringify(user), 'EX', 3600);
+            await redisClient.set(RedisKeys.userKey.profile(id), JSON.stringify(user), 'EX', 3600);
             
             return user;
         } catch (error) {
@@ -39,6 +39,10 @@ class ProductService {
                 throw new Error('User not found');
             }
             await Account.updateOne({ _id: id }, data);
+            
+            await redisClient.del(RedisKeys.userKey.profile(id));
+            await redisClient.del(RedisKeys.userKey.allUsers());
+            
             return { message: 'Update user info successfully' };
         }catch(err){
             console.error("Error in updateUserInfo:", err);
@@ -55,15 +59,18 @@ class ProductService {
             if(account.role !== 'admin'){
                 throw new Error('Permission denied');
             }
-            const cacheAllUsers = await redisClient.get('all_users');
-            if (cacheAllUsers) {
+            
+            const cacheAllUsers = await redisClient.get(RedisKeys.userKey.allUsers());
+            if (cacheAllUsers !== null) {
                 return JSON.parse(cacheAllUsers);
             }
+            
             const users = await Account.find({}).select('-password').lean();
             if (!users) {
                 throw new Error('Users not found');
             }
-            await redisClient.set('all_users', JSON.stringify(users), 'EX', 3600);
+            
+            await redisClient.set(RedisKeys.userKey.allUsers(), JSON.stringify(users), 'EX', 3600);
             return users;
         } catch (error) {
             console.error("Error in getAllUsers:", error);
@@ -72,4 +79,4 @@ class ProductService {
     }
 }
 
-export default ProductService;
+export default userService;

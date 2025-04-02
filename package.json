@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@namatery/multer-minio": "^1.1.2"
+  }
+}

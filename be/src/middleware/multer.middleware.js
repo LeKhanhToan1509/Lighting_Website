@@ -1,23 +1,26 @@
 import multer from "multer";
-import fs from "fs";
-import path from "path";
 import { MinioStorageEngine } from "@namatery/multer-minio";
-const uploadDir = path.resolve("uploads");
+import * as Minio from 'minio'
+import dotenv from "dotenv";
+dotenv.config();
 
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
 
-// Cấu hình Multer
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir); // Lưu vào thư mục uploads/
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + "-" + file.originalname); // Đổi tên file
-  },
+const minioClient = new Minio.Client({
+  endPoint: "localhost",
+  port: 9000,
+  useSSL: false,
+  accessKey: process.env.MINIO_ACCESS_KEY,
+  secretKey: process.env.MINIO_SECRET_KEY,
 });
 
+const options = {
+  bucket: "productimages",
+  object: {
+    name: (req, file) => `${Date.now()}-${file.originalname}`,
+  },
+};
+
+const storage = new MinioStorageEngine(minioClient, "productimages", options);
 const upload = multer({ storage });
 
 const uploadImages = (req, res, next) => {
@@ -30,9 +33,11 @@ const uploadImages = (req, res, next) => {
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ error: "No files uploaded" });
     }
-
-    req.images = req.files.map((file) => path.resolve(uploadDir, file.filename));
-
+    console.log(req.files);
+    req.files.forEach((file) => {
+      console.log(`http://localhost:9000/productimages${file.path}`);
+    });
+    req.images = req.files.map((file) => `http://localhost:9000/productimages${file.path}`);
     next();
   });
 };

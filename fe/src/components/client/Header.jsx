@@ -52,14 +52,6 @@ const Header = () => {
     },
     
     {
-      key: 'settings',
-      label: (
-        <Link to="/settings" className="font-medium text-base">
-          Cài đặt
-        </Link>
-      ),
-    },
-    {
       type: 'divider',
     },
     {

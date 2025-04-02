@@ -6,64 +6,6 @@ import { Button } from "antd";
 
 
 const Popular = () => {
-  const popular_product = [
-    {
-      id: 1,
-      type: "product-selling",
-      name: "Signal Grande Pendant",
-      price: 10000,
-      color: ["blue", "gold", "grey", "white"],
-      category: "Ceiling Lights",
-      images: [
-        "./assets/products/pendant_blue.png",
-        "./assets/products/pendant_gold.png",
-        "./assets/products/pendant_grey.png",
-        "./assets/products/pendant_white.png",
-      ],
-    },
-    {
-      id: 2,
-      type: "product-selling",
-      name: "Signal Grande Pendant",
-      price: 10000,
-      color: ["blue", "gold", "grey", "white"],
-      category: "Ceiling Lights",
-      images: [
-        "./assets/products/pendant_blue.png",
-        "./assets/products/pendant_gold.png",
-        "./assets/products/pendant_grey.png",
-        "./assets/products/pendant_white.png",
-      ],
-    },
-    {
-      id: 3,
-      type: "product-selling",
-      name: "Signal Grande Pendant",
-      price: 10000,
-      color: ["blue", "gold", "grey", "white"],
-      category: "Ceiling Lights",
-      images: [
-        "./assets/products/pendant_blue.png",
-        "./assets/products/pendant_gold.png",
-        "./assets/products/pendant_grey.png",
-        "./assets/products/pendant_white.png",
-      ],
-    },
-    {
-      id: 4,
-      type: "product-selling",
-      name: "Signal Grande Pendant",
-      price: 10000,
-      color: ["blue", "gold", "grey", "white"],
-      category: "Ceiling Lights",
-      images: [
-        "./assets/products/pendant_blue.png",
-        "./assets/products/pendant_gold.png",
-        "./assets/products/pendant_grey.png",
-        "./assets/products/pendant_white.png",
-      ],
-    },
-  ];
 
   const product_featured = [
     {
@@ -93,25 +35,6 @@ const Popular = () => {
 
   return (
     <div className="ml-7">
-      <motion.div
-        ref={ref4}
-        className="flex flex-col items-center mb-20 pb-20"
-        initial={{ opacity: 0, y: 50 }}
-        animate={inView4 ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 0.3, delay: 0.3 }}
-      >
-        <div className="px-5 py-1.5 mb-7 mt-2">
-          <p className="text-2xl font-semibold font-montserrat mt-7">
-            Popular Product
-          </p>
-
-        </div>
-        <div className="flex flex-wrap justify-around gap-5">
-          {popular_product.map((product, index) =>  (
-            <Product key={index} payload={product} />
-          ))}
-        </div>
-      </motion.div>
       <motion.div
         ref={ref1}
         className="mt-10 flex justify-around"

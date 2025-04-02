@@ -1,13 +1,18 @@
-import { model, Schema } from 'mongoose';
+import mongoose from 'mongoose';
 
 const DOCUMENT_NAME = 'Payment';
 const COLLECTION_NAME = 'payments';
 
-const PaymentSchema = new Schema({
-    user_id: {
-        type: Schema.ObjectId,
+const paymentSchema = new mongoose.Schema({
+    accountId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Account',
         required: true,
-        trim: true,
+    },
+    orderId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Order',
+        required: true,
     },
     amount: {
         type: Number,
@@ -18,21 +23,21 @@ const PaymentSchema = new Schema({
         required: true,
         trim: true,
     },
-    hex_key: {
+    transactionId: {
         type: String,
         required: true,
         trim: true,
     },
     status: {
         type: String,
+        enum: ['pending', 'completed', 'failed', 'refunded'],
         default: 'pending',
         trim: true,
     },
-
 }, {
     timestamps: true,
     collection: COLLECTION_NAME,
-})
+});
 
-const PaymentModel = model(DOCUMENT_NAME, PaymentSchema);
-export default PaymentModel;
+const Payment = mongoose.model(DOCUMENT_NAME, paymentSchema);
+export default Payment;

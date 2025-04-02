@@ -5,19 +5,17 @@ import redisClient from '../dbs/redisdb.js';
 export default class orderController {
     static createOrder = async (req, res) => {
         try {
-            const user_id = req.user._id;
+            const accountId = req.user._id; // Adjusted to use accountId
             const orderData = req.body;
-            console.log(orderData);
-    
+            
             let payment = null;
-            if (orderData.paymentMethod === 'TRANSFER') {
+            if (orderData.payment.method === 'TRANSFER') { // Adjusted to use nested payment method
                 const transactionData = {
-                    user_id,
-                    amount: orderData.totalPrice,
+                    accountId, // Adjusted to use accountId
+                    amount: orderData.payment.amount, // Adjusted to use nested payment amount
                 };
     
                 payment = await paymentService.createTransaction(transactionData);
-                console.log(payment);
                 if (!payment) {
                     throw new Error("Create transaction failed");
                 }
@@ -27,9 +25,9 @@ export default class orderController {
             }
     
             const payload = {
-                user_id,
+                accountId, // Adjusted to use accountId
                 ...orderData,
-                payment_id: payment ? payment._id : null
+                payment: { ...orderData.payment, transactionId: payment ? payment._id : null } // Adjusted to include transactionId
             };
     
             const newOrder = await orderService.createOrder(payload);
@@ -53,7 +51,7 @@ export default class orderController {
         try {
             const userId = req.user._id;
             const orderId = req.params.id;
-            const order = await orderService.getOrderById({
+            const order = await orderService.getOrdersById({
                 userId,
                 orderId
             });
@@ -105,10 +103,10 @@ export default class orderController {
         }
     }
 
-    static async getOrders(req, res) {
+    static async getOrdersByUserId(req, res) {
         try {
             const userId = req.user._id;
-            const orders = await orderService.getOrders(userId);
+            const orders = await orderService.getOrdersByUserId(userId);
             res.status(200).json({
                 message: 'Get orders successfully',
                 orders

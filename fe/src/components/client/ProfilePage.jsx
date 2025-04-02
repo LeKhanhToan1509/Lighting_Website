@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { 
   Tabs, 
-  Table, 
-  Tag, 
   Card, 
   Avatar, 
-  Empty, 
   Spin, 
   Button, 
   Form, 
@@ -14,20 +11,21 @@ import {
   Select, 
   Row, 
   Col, 
-  message,
-  Divider
+  message
 } from 'antd';
 import { 
   UserOutlined, 
-  ShoppingOutlined, 
-  SettingOutlined, 
+  EditOutlined,
+  LockOutlined,
+  SaveOutlined,
+  CloseOutlined,
   PhoneOutlined, 
   MailOutlined, 
   ManOutlined, 
   WomanOutlined,
-  HomeOutlined
+  HomeOutlined,
+  SettingOutlined
 } from '@ant-design/icons';
-import { Link } from 'react-router-dom';
 import axiosInstance from '../../axiosInstance';
 
 const { TabPane } = Tabs;
@@ -39,11 +37,11 @@ const ProfilePage = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('1');
   const [form] = Form.useForm();
+  const [passwordForm] = Form.useForm();
   const [editing, setEditing] = useState(false);
   const [userData, setUserData] = useState({});
-  const [orders, setOrders] = useState([]);
 
-  // Fetch user details and related data
+  // Fetch user details
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -51,12 +49,15 @@ const ProfilePage = () => {
           throw new Error("User ID is missing");
         }
 
-        // Fetch user details
-        const userResponse = await axiosInstance.get(`/user/get_detail_user/${user.acc._id}`, {}, {
-          headers: {
-            token: `Bearer ${user.token}`
+        const userResponse = await axiosInstance.get(
+          `/user/get_detail_user/${user.acc._id}`, 
+          {
+            headers: {
+              token: `Bearer ${user.token}`
+            }
           }
-        });
+        );
+        
         const currentUser = userResponse.data.user[0];
         setUserData(currentUser);
 
@@ -74,14 +75,6 @@ const ProfilePage = () => {
           postalCode: currentUser.postalCode,
           addressNote: currentUser.addressNote || '',
         });
-
-        const ordersResponse = await axiosInstance.get(`/order/user/${user.acc._id}`, {}, {
-          headers: {
-            token: `Bearer ${user.token}`
-          }
-        });
-        console.log(ordersResponse.data);
-        setOrders(ordersResponse.data.orders || []);
       } catch (err) {
         console.error("Error fetching user data:", err);
         message.error("Không thể tải thông tin người dùng");
@@ -100,7 +93,16 @@ const ProfilePage = () => {
 
   const handleSaveProfile = async (values) => {
     try {
-      const response = await axiosInstance.put(`/user/get_detail_user/${user.acc._id}`, values);
+      const response = await axiosInstance.put(
+        `/user/get_detail_user/${user.acc._id}`, 
+        values,
+        {
+          headers: {
+            token: `Bearer ${user.token}`
+          }
+        }
+      );
+      
       setUserData(response.data.user);
       setEditing(false);
       message.success("Cập nhật thông tin thành công");
@@ -118,196 +120,220 @@ const ProfilePage = () => {
   // Password change handler
   const handleChangePassword = async (values) => {
     try {
-      await axiosInstance.post(`/user/change-password/${user.acc._id}`, values);
+      await axiosInstance.post(
+        `/user/change-password/${user.acc._id}`, 
+        values,
+        {
+          headers: {
+            token: `Bearer ${user.token}`
+          }
+        }
+      );
+      
       message.success("Đổi mật khẩu thành công");
-      form.resetFields();
+      passwordForm.resetFields();
     } catch (err) {
       console.error("Error changing password:", err);
       message.error("Không thể đổi mật khẩu");
     }
   };
 
-  // Column definitions
-  const orderColumns = [
-    {
-      title: 'Mã đơn hàng',
-      dataIndex: '_id',
-      key: '_id',
-      render: (text) => <Link to={`/order/${text}`}>{text}</Link>,
-    },
-    {
-      title: 'Sản phẩm',
-      dataIndex: 'items',
-      key: 'items',
-      render: (items) => items.map(item => item.name).join(', ')
-    },
-    {
-      title: 'Tổng tiền',
-      dataIndex: 'totalPrice',
-      key: 'totalPrice',
-      render: (total) => `${total.toLocaleString('vi-VN')} đ`,
-    },
-    {
-      title: 'Trạng thái',
-      key: 'status',
-      render: () => (
-        <Tag color="processing">Đang xử lý</Tag>
-      ),
-    },
-    {
-      title: 'Chi tiết',
-      key: 'action',
-      render: (_, record) => (
-        <Button type="link">Xem chi tiết</Button>
-      ),
-    },
-  ];
-
   // Render user info form
   const renderUserInfo = () => (
-    <Card className="mb-6 shadow-sm">
+    <Card 
+      className="rounded-2xl shadow-lg transition-all duration-300 hover:shadow-xl"
+      style={{ 
+        background: 'linear-gradient(to right, #f5f7fa 0%, #f5f7fa 100%)',
+        border: 'none'
+      }}
+    >
       {loading ? (
-        <div className="text-center py-12">
-          <Spin size="large" />
+        <div className="flex justify-center items-center h-64">
+          <Spin 
+            size="large" 
+            className="text-blue-500"
+          />
         </div>
       ) : (
         <Form
           form={form}
           layout="vertical"
           onFinish={handleSaveProfile}
-          disabled={!editing}
+          className="p-2"
         >
-          <Row gutter={16}>
-            <Col xs={24} md={12}>
-              <h3 className="text-lg font-medium mb-4">Thông tin cá nhân</h3>
-              
-              <Row gutter={16}>
-                <Col xs={24} md={12}>
-                  <Form.Item
-                    name="firstName"
-                    label="Tên"
-                    rules={[{ required: true, message: 'Vui lòng nhập tên!' }]}
+          <Row gutter={[24, 16]}>
+            {/* Left Column: Personal Info */}
+            <Col xs={24} md={12} className="space-y-4">
+              <div className="bg-white rounded-2xl p-6 shadow-md">
+                <h3 className="text-xl font-semibold text-blue-600 mb-4 flex items-center">
+                  <UserOutlined className="mr-3 text-blue-500" />
+                  Thông tin cá nhân
+                </h3>
+                
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Form.Item
+                      name="firstName"
+                      label={<span className="text-gray-600">Tên</span>}
+                      rules={[{ required: true, message: 'Vui lòng nhập tên!' }]}
+                    >
+                      <Input 
+                        className="rounded-xl" 
+                        placeholder="Nhập tên" 
+                        disabled={!editing}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item
+                      name="lastName"
+                      label={<span className="text-gray-600">Họ</span>}
+                      rules={[{ required: true, message: 'Vui lòng nhập họ!' }]}
+                    >
+                      <Input 
+                        className="rounded-xl" 
+                        placeholder="Nhập họ" 
+                        disabled={!editing}
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
+
+                <Form.Item
+                  name="email"
+                  label={<span className="text-gray-600">Email</span>}
+                  rules={[
+                    { required: true, message: 'Vui lòng nhập email!' },
+                    { type: 'email', message: 'Email không hợp lệ!' }
+                  ]}
+                >
+                  <Input 
+                    className="rounded-xl" 
+                    placeholder="Nhập email" 
+                    disabled
+                  />
+                </Form.Item>
+
+                <Form.Item
+                  name="phone"
+                  label={<span className="text-gray-600">Số điện thoại</span>}
+                  rules={[{ required: true, message: 'Vui lòng nhập số điện thoại!' }]}
+                >
+                  <Input 
+                    className="rounded-xl" 
+                    placeholder="Nhập số điện thoại" 
+                    disabled={!editing}
+                  />
+                </Form.Item>
+
+                <Form.Item
+                  name="gender"
+                  label={<span className="text-gray-600">Giới tính</span>}
+                >
+                  <Select 
+                    placeholder="Chọn giới tính" 
+                    className="rounded-xl" 
+                    disabled={!editing}
                   >
-                    <Input placeholder="Nhập tên" />
-                  </Form.Item>
-                </Col>
-                <Col xs={24} md={12}>
-                  <Form.Item
-                    name="lastName"
-                    label="Họ"
-                    rules={[{ required: true, message: 'Vui lòng nhập họ!' }]}
-                  >
-                    <Input placeholder="Nhập họ" />
-                  </Form.Item>
-                </Col>
-              </Row>
-              
-              <Form.Item
-                name="email"
-                label="Email"
-                rules={[
-                  { required: true, message: 'Vui lòng nhập email!' },
-                  { type: 'email', message: 'Email không hợp lệ!' }
-                ]}
-              >
-                <Input placeholder="Nhập email" disabled />
-              </Form.Item>
-              
-              <Form.Item
-                name="phone"
-                label="Số điện thoại"
-                rules={[{ required: true, message: 'Vui lòng nhập số điện thoại!' }]}
-              >
-                <Input placeholder="Nhập số điện thoại" />
-              </Form.Item>
-              
-              <Form.Item
-                name="gender"
-                label="Giới tính"
-              >
-                <Select placeholder="Chọn giới tính">
-                  <Option value="male">Nam</Option>
-                  <Option value="female">Nữ</Option>
-                  <Option value="other">Khác</Option>
-                </Select>
-              </Form.Item>
+                    <Option value="male">Nam</Option>
+                    <Option value="female">Nữ</Option>
+                    <Option value="other">Khác</Option>
+                  </Select>
+                </Form.Item>
+              </div>
             </Col>
-            
-            <Col xs={24} md={12}>
-              <h3 className="text-lg font-medium mb-4">Địa chỉ giao hàng</h3>
-              
-              <Form.Item
-                name="addressLine1"
-                label="Địa chỉ chi tiết"
-                rules={[{ required: true, message: 'Vui lòng nhập địa chỉ!' }]}
-              >
-                <Input.TextArea placeholder="Số nhà, đường, khu vực..." rows={3} />
-              </Form.Item>
-              
-              <Row gutter={16}>
-                <Col xs={24} md={8}>
-                  <Form.Item
-                    name="province"
-                    label="Tỉnh/Thành phố"
-                    rules={[{ required: true, message: 'Bắt buộc!' }]}
-                  >
-                    <Input placeholder="Tỉnh/Thành phố" />
-                  </Form.Item>
-                </Col>
-                <Col xs={24} md={8}>
-                  <Form.Item
-                    name="district"
-                    label="Quận/Huyện"
-                    rules={[{ required: true, message: 'Bắt buộc!' }]}
-                  >
-                    <Input placeholder="Quận/Huyện" />
-                  </Form.Item>
-                </Col>
-                <Col xs={24} md={8}>
-                  <Form.Item
-                    name="ward"
-                    label="Phường/Xã"
-                    rules={[{ required: true, message: 'Bắt buộc!' }]}
-                  >
-                    <Input placeholder="Phường/Xã" />
-                  </Form.Item>
-                </Col>
-              </Row>
-              
-              <Row gutter={16}>
-                <Col xs={24} md={12}>
-                  <Form.Item
-                    name="postalCode"
-                    label="Mã bưu chính"
-                  >
-                    <Input placeholder="Mã bưu chính" />
-                  </Form.Item>
-                </Col>
-                <Col xs={24} md={12}>
-                  <Form.Item
-                    name="addressNote"
-                    label="Ghi chú"
-                  >
-                    <Input placeholder="Ghi chú cho người giao hàng" />
-                  </Form.Item>
-                </Col>
-              </Row>
+
+            {/* Right Column: Address Info */}
+            <Col xs={24} md={12} className="space-y-4">
+              <div className="bg-white rounded-2xl p-6 shadow-md">
+                <h3 className="text-xl font-semibold text-blue-600 mb-4 flex items-center">
+                  <HomeOutlined className="mr-3 text-blue-500" />
+                  Địa chỉ giao hàng
+                </h3>
+                
+                <Form.Item
+                  name="addressLine1"
+                  label={<span className="text-gray-600">Địa chỉ chi tiết</span>}
+                  rules={[{ required: true, message: 'Vui lòng nhập địa chỉ!' }]}
+                >
+                  <Input.TextArea 
+                    className="rounded-xl" 
+                    placeholder="Số nhà, đường, khu vực..." 
+                    rows={3} 
+                    disabled={!editing}
+                  />
+                </Form.Item>
+
+                <Row gutter={16}>
+                  <Col span={8}>
+                    <Form.Item
+                      name="province"
+                      label={<span className="text-gray-600">Tỉnh/TP</span>}
+                      rules={[{ required: true, message: 'Bắt buộc!' }]}
+                    >
+                      <Input 
+                        className="rounded-xl" 
+                        placeholder="Tỉnh/TP" 
+                        disabled={!editing}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col span={8}>
+                    <Form.Item
+                      name="district"
+                      label={<span className="text-gray-600">Quận/Huyện</span>}
+                      rules={[{ required: true, message: 'Bắt buộc!' }]}
+                    >
+                      <Input 
+                        className="rounded-xl" 
+                        placeholder="Quận/Huyện" 
+                        disabled={!editing}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col span={8}>
+                    <Form.Item
+                      name="ward"
+                      label={<span className="text-gray-600">Phường/Xã</span>}
+                      rules={[{ required: true, message: 'Bắt buộc!' }]}
+                    >
+                      <Input 
+                        className="rounded-xl" 
+                        placeholder="Phường/Xã" 
+                        disabled={!editing}
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
+              </div>
             </Col>
           </Row>
-          
-          <div className="flex justify-end mt-4">
+
+          {/* Action Buttons */}
+          <div className="flex justify-end mt-6 space-x-4">
             {editing ? (
               <>
-                <Button onClick={handleCancelEdit} className="mr-2">
-                  Hủy
+                <Button 
+                  onClick={handleCancelEdit} 
+                  className="rounded-xl border-red-500 text-red-500 hover:bg-red-50"
+                >
+                  <CloseOutlined /> Hủy
                 </Button>
-                <Button type="primary" htmlType="submit">
-                  Lưu thay đổi
+                <Button 
+                  type="primary" 
+                  htmlType="submit" 
+                  className="rounded-xl bg-blue-600 hover:bg-blue-700"
+                >
+                  <SaveOutlined /> Lưu thay đổi
                 </Button>
               </>
             ) : (
-              <Button type="primary" onClick={handleEditProfile}>
-                Chỉnh sửa thông tin
+              <Button 
+                type="primary" 
+                onClick={handleEditProfile} 
+                className="rounded-xl bg-blue-600 hover:bg-blue-700"
+              >
+                <EditOutlined /> Chỉnh sửa
               </Button>
             )}
           </div>
@@ -316,172 +342,148 @@ const ProfilePage = () => {
     </Card>
   );
 
-  // Render orders tab
-  const renderOrdersTab = () => (
-    loading ? (
-      <div className="text-center py-12">
-        <Spin size="large" />
-      </div>
-    ) : orders.length > 0 ? (
-      <Table
-        dataSource={orders}
-        columns={orderColumns}
-        rowKey="_id"
-      />
-    ) : (
-      <Empty
-        description="Bạn chưa có đơn hàng nào"
-        image={Empty.PRESENTED_IMAGE_SIMPLE}
-        className="py-12"
-      >
-        <Link to="/shop">
-          <Button type="primary">Mua sắm ngay</Button>
-        </Link>
-      </Empty>
-    )
-  );
-
   // Render settings tab
   const renderSettingsTab = () => (
-    <Card className="mb-6 shadow-sm">
-      <h3 className="text-lg font-medium mb-4">Cài đặt tài khoản</h3>
-      <div className="space-y-6">
-        <div>
-          <h4 className="font-medium mb-2">Đổi mật khẩu</h4>
-          <Form 
-            layout="vertical" 
-            onFinish={handleChangePassword}
+    <Card 
+      className="rounded-2xl shadow-lg transition-all duration-300 hover:shadow-xl"
+      style={{ 
+        background: 'linear-gradient(to right, #f5f7fa 0%, #f5f7fa 100%)',
+        border: 'none'
+      }}
+    >
+      <div className="bg-white rounded-2xl p-6 shadow-md">
+        <h3 className="text-xl font-semibold text-blue-600 mb-6 flex items-center">
+          <LockOutlined className="mr-3 text-blue-500" />
+          Đổi mật khẩu
+        </h3>
+        <Form 
+          form={passwordForm}
+          layout="vertical" 
+          onFinish={handleChangePassword}
+          className="space-y-4"
+        >
+          <Form.Item
+            name="currentPassword"
+            label={<span className="text-gray-600">Mật khẩu hiện tại</span>}
+            rules={[{ required: true, message: 'Vui lòng nhập mật khẩu hiện tại!' }]}
           >
-            <Form.Item
-              name="currentPassword"
-              label="Mật khẩu hiện tại"
-              rules={[{ required: true, message: 'Vui lòng nhập mật khẩu hiện tại!' }]}
-            >
-              <Input.Password placeholder="Nhập mật khẩu hiện tại" />
-            </Form.Item>
-            <Form.Item
-              name="newPassword"
-              label="Mật khẩu mới"
-              rules={[
-                { required: true, message: 'Vui lòng nhập mật khẩu mới!' },
-                { min: 8, message: 'Mật khẩu phải có ít nhất 8 ký tự' }
-              ]}
-            >
-              <Input.Password placeholder="Nhập mật khẩu mới" />
-            </Form.Item>
-            <Form.Item
-              name="confirmPassword"
-              label="Xác nhận mật khẩu"
-              dependencies={['newPassword']}
-              rules={[
-                { required: true, message: 'Vui lòng xác nhận mật khẩu!' },
-                ({ getFieldValue }) => ({
-                  validator(_, value) {
-                    if (!value || getFieldValue('newPassword') === value) {
-                      return Promise.resolve();
-                    }
-                    return Promise.reject(new Error('Mật khẩu xác nhận không khớp!'));
-                  },
-                }),
-              ]}
-            >
-              <Input.Password placeholder="Xác nhận mật khẩu mới" />
-            </Form.Item>
-            <Button type="primary" htmlType="submit">Cập nhật mật khẩu</Button>
-          </Form>
-        </div>
-        
-        <Divider />
-        
-        <div>
-          <h4 className="font-medium mb-2">Xóa tài khoản</h4>
-          <p className="text-gray-500 mb-4">
-            Xóa tài khoản sẽ xóa tất cả dữ liệu của bạn khỏi hệ thống. Hành động này không thể hoàn tác.
-          </p>
-          <Button danger>Xóa tài khoản</Button>
-        </div>
+            <Input.Password 
+              className="rounded-xl" 
+              placeholder="Nhập mật khẩu hiện tại" 
+            />
+          </Form.Item>
+          <Form.Item
+            name="newPassword"
+            label={<span className="text-gray-600">Mật khẩu mới</span>}
+            rules={[
+              { required: true, message: 'Vui lòng nhập mật khẩu mới!' },
+              { min: 8, message: 'Mật khẩu phải có ít nhất 8 ký tự' }
+            ]}
+          >
+            <Input.Password 
+              className="rounded-xl" 
+              placeholder="Nhập mật khẩu mới" 
+            />
+          </Form.Item>
+          <Form.Item
+            name="confirmPassword"
+            label={<span className="text-gray-600">Xác nhận mật khẩu</span>}
+            dependencies={['newPassword']}
+            rules={[
+              { required: true, message: 'Vui lòng xác nhận mật khẩu!' },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || getFieldValue('newPassword') === value) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(new Error('Mật khẩu xác nhận không khớp!'));
+                },
+              }),
+            ]}
+          >
+            <Input.Password 
+              className="rounded-xl" 
+              placeholder="Xác nhận mật khẩu mới" 
+            />
+          </Form.Item>
+          <Button 
+            type="primary" 
+            htmlType="submit" 
+            className="rounded-xl bg-blue-600 hover:bg-blue-700 w-full"
+          >
+            <LockOutlined /> Cập nhật mật khẩu
+          </Button>
+        </Form>
       </div>
     </Card>
   );
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden">
         {/* Profile Header */}
-        <div className="bg-gray-800 text-white p-6">
-          <div className="flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0">
-            <div className="flex-shrink-0">
-              <Avatar 
-                size={100} 
-                icon={<UserOutlined />} 
-                className="border-4 border-white"
-              />
-            </div>
-            <div className="ml-0 md:ml-6 text-center md:text-left">
-              <h1 className="text-2xl font-bold">{userData?.firstName} {userData?.lastName}</h1>
-              <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-2">
-                <div className="flex items-center">
+        <div className="bg-gradient-to-r from-blue-500 to-teal-400 text-white p-8">
+          <div className="flex flex-col md:flex-row items-center space-y-6 md:space-y-0 md:space-x-8">
+            <Avatar 
+              size={140} 
+              icon={<UserOutlined />} 
+              className="border-4 border-white shadow-lg transform transition-transform hover:scale-110"
+            />
+            <div className="text-center md:text-left">
+              <h1 className="text-3xl font-bold mb-2">
+                {userData?.firstName} {userData?.lastName}
+              </h1>
+              <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-4">
+                <div className="flex items-center bg-white/20 px-3 py-1 rounded-full">
                   <MailOutlined className="mr-2" />
                   <span>{userData?.email}</span>
                 </div>
-                <div className="flex items-center">
+                <div className="flex items-center bg-white/20 px-3 py-1 rounded-full">
                   <PhoneOutlined className="mr-2" />
                   <span>{userData?.phone}</span>
                 </div>
-                <div className="flex items-center">
-                  {userData?.gender === 'male' ? <ManOutlined className="mr-2" /> : <WomanOutlined className="mr-2" />}
-                  <span>{userData?.gender === 'male' ? 'Nam' : userData?.gender === 'female' ? 'Nữ' : 'Khác'}</span>
-                </div>
-              </div>
-              <div className="flex items-center mt-2">
-                <HomeOutlined className="mr-2" />
-                <span className="text-sm">{userData?.addressLine1}, {userData?.ward}, {userData?.district}, {userData?.province}</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Tabs Navigation */}
+        {/* Tabs */}
         <Tabs 
           activeKey={activeTab} 
           onChange={setActiveTab}
-          className="px-6 pt-4"
-          tabBarStyle={{ marginBottom: 24 }}
+          centered
+          tabBarStyle={{ 
+            marginBottom: 0, 
+            padding: '16px 0',
+            fontWeight: 600 
+          }}
         >
           <TabPane
             tab={
-              <span className="flex items-center">
+              <span className="px-4 py-2 rounded-full">
                 <UserOutlined className="mr-2" />
                 Thông tin cá nhân
               </span>
             }
             key="1"
           >
-            {renderUserInfo()}
+            <div className="p-6">
+              {renderUserInfo()}
+            </div>
           </TabPane>
 
           <TabPane
             tab={
-              <span className="flex items-center">
-                <ShoppingOutlined className="mr-2" />
-                Đơn hàng
-              </span>
-            }
-            key="2"
-          >
-            {renderOrdersTab()}
-          </TabPane>
-
-          <TabPane
-            tab={
-              <span className="flex items-center">
+              <span className="px-4 py-2 rounded-full">
                 <SettingOutlined className="mr-2" />
                 Cài đặt
               </span>
             }
-            key="3"
+            key="2"
           >
-            {renderSettingsTab()}
+            <div className="p-6">
+              {renderSettingsTab()}
+            </div>
           </TabPane>
         </Tabs>
       </div>

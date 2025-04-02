@@ -1,5 +1,4 @@
 import productService from "../services/product.service.js";
-
 export default class productController {
     static async getAllProducts(req, res) {
         try  {

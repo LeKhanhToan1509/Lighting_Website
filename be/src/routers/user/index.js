@@ -11,6 +11,4 @@ userRoutes.get('/all', userController.getAllUsers);
 
 
 
-
-
 export default userRoutes;

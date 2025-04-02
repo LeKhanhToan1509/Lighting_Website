@@ -19,6 +19,7 @@
     "flyonui": "^1.3.0",
     "framer-motion": "^12.4.10",
     "fs": "^0.0.1-security",
+    "lucide-react": "^0.484.0",
     "path": "^0.12.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -41,6 +42,7 @@
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.18",
     "globals": "^15.14.0",
+    "rollup": "^3.29.4",
     "vite": "^6.1.0"
   }
 }

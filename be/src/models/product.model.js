@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 const DOCUMENT_NAME = 'Product';
-const COLLECTION_NAME = 'Product';
+const COLLECTION_NAME = 'products';
 
 const productSchema = new mongoose.Schema({
     name: { type: String, required: true },
@@ -11,7 +11,6 @@ const productSchema = new mongoose.Schema({
     category: { type: String, required: true },
     images: [{ type: String }], 
     stock: { type: Number, required: true, default: 0 },
-    quantity: { type: Number, default: 1 },
     rating: { type: Number, default: 0 },
     description: { type: String },
     deletedAt: { type: Date, default: null }, 
@@ -21,5 +20,4 @@ const productSchema = new mongoose.Schema({
 });
 
 const Product = mongoose.model(DOCUMENT_NAME, productSchema);
-
 export default Product;
