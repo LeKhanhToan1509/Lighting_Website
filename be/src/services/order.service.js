@@ -7,19 +7,19 @@ import RedisKeys from '../utils/redisKeys.js';
 export default class orderService {
     static async createOrder(payload) {
         try {
-            const { accountId, ...orderData } = payload; // Adjusted to use accountId
-            const user = await Account.findOne({ _id: accountId }).lean();
+            const { user_id, ...orderData } = payload;
+            const user = await Account.findOne({ _id: user_id }).lean();
             if (!user) throw new Error('User not found');
             
             const newOrder = new Order({
                 ...orderData,
-                accountId // Adjusted to use accountId
+                user_id
             });
             
             const savedOrder = await newOrder.save();
             
             // Invalidate user orders cache
-            await redisClient.del(RedisKeys.ordersKey.userOrders(accountId)); // Adjusted to use accountId
+            await redisClient.del(RedisKeys.ordersKey.userOrders(user_id));
             // Invalidate all orders cache
             await redisClient.del(RedisKeys.ordersKey.allOrders());
             
@@ -32,21 +32,21 @@ export default class orderService {
     
     static async getOrdersById(payload) {
         try {
-            const { accountId, orderId } = payload; // Adjusted to use accountId
+            const { userId, orderId } = payload;
             
             // Try to get order from Redis first
             const cachedOrder = await redisClient.get(`order:${orderId}`);
             if (cachedOrder) {
                 const order = JSON.parse(cachedOrder);
                 // Verify user has permission to access this order
-                if (order.accountId.toString() !== accountId) throw new Error('Unauthorized'); // Adjusted to use accountId
+                if (order.user_id.toString() !== userId) throw new Error('Unauthorized');
                 return order;
             }
             
             const order = await Order.findOne({ _id: orderId }).lean();
             if (!order) throw new Error('Order not found');
             
-            if (order.accountId.toString() !== accountId) throw new Error('Unauthorized'); // Adjusted to use accountId
+            if (order.user_id.toString() !== userId) throw new Error('Unauthorized');
             
             // Cache order for future requests
             await redisClient.set(`order:${orderId}`, JSON.stringify(order), 'EX', 3600); // Cache for 1 hour
@@ -118,7 +118,6 @@ export default class orderService {
     
     static async getOrdersByUserId(userId) {
         try {
-            // Try to get from cache first
             const cachedOrders = await redisClient.get(RedisKeys.ordersKey.userOrders(userId));
             if (cachedOrders) {
                 return JSON.parse(cachedOrders);
@@ -126,7 +125,6 @@ export default class orderService {
             
             const orders = await Order.find({ "user_id": userId }).lean();
             
-            // Cache user orders
             await redisClient.set(RedisKeys.ordersKey.userOrders(userId), JSON.stringify(orders), 'EX', 3600); // Cache for 1 hour
             
             return orders;

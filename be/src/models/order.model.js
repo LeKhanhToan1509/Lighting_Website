@@ -1,56 +1,51 @@
 import mongoose from 'mongoose';
 
-const DOCUMENT_NAME = 'Order';
-const COLLECTION_NAME = 'orders';
+const addressSchema = new mongoose.Schema({
+    firstName: { type: String, required: true },
+    lastName: { type: String, required: true },
+    email: { type: String, required: true },
+    phone: { type: String, required: true },
+    addressLine1: { type: String, required: true },
+    province: { type: String, required: true },
+    district: { type: String, required: true },
+    ward: { type: String, required: true },
+    postalCode: { type: String, required: true },
+    gender: { type: String, enum: ['male', 'female', 'other'], required: true },
+    addressNote: { type: String, default: '' }
+});
 
-const paymentDetailsSchema = new mongoose.Schema({
-    method: { 
-        type: String, 
-        enum: ['COD', 'TRANSFER', 'CREDIT_CARD', 'PAYPAL'], 
-        required: true,
-        uppercase: true
-    },
-    status: {
-        type: String,
-        enum: ['pending', 'completed', 'failed', 'refunded'],
-        default: function() {
-            return this.parent().method === 'COD' ? 'pending' : 'pending';
-        }
-    },
-    transactionId: {
-        type: String,
-        trim: true,
-        required: function() {
-            return this.parent().method !== 'COD';
-        }
-    },
-    paidAt: {
-        type: Date
-    },
-    amount: {
-        type: Number,
-        required: true
-    }
-}, { _id: false });
+const itemSchema = new mongoose.Schema({
+    _id: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'Product' },
+    type: { type: String, required: true },
+    name: { type: String, required: true },
+    price: { type: Number, required: true },
+    color: { type: String },
+    category: { type: String },
+    images: { type: [String] },
+    quantity: { type: Number, required: true }
+});
 
 const orderSchema = new mongoose.Schema({
-    accountId: { 
+    user_id: { 
         type: mongoose.Schema.Types.ObjectId, 
         required: true, 
-        ref: 'Account' 
+        ref: 'User' 
     },
-    items: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'OrderItem', // Correctly referencing the OrderItem schema
-        required: true,
-    }],
-    totalPrice: { type: Number, required: true },
-    shippingAddress: { 
+    payment_id: { 
         type: mongoose.Schema.Types.ObjectId, 
-        ref: 'Address', 
-        required: true 
+        ref: 'Payment',
+        required: function() {
+            return this.paymentMethod === 'TRANSFER';
+        }
     },
-    payment: paymentDetailsSchema,
+    paymentMethod: { 
+        type: String, 
+        enum: ['COD', 'TRANSFER'], 
+        required: true,
+    },
+    items: [itemSchema],
+    totalPrice: { type: Number, required: true },
+    address: addressSchema,
     status: {
         type: String,
         enum: [
@@ -63,30 +58,19 @@ const orderSchema = new mongoose.Schema({
             'cancelled'
         ],
         default: function () {
-            return this.payment.method === 'COD' ? 'pending_confirmation' : 'pending_payment';
+            return this.paymentMethod === 'COD' ? 'pending_confirmation' : 'pending_payment';
         }
     },
-    isPaid: { 
-        type: Boolean, 
-        default: false 
-    }
-}, { 
-    timestamps: true,
-    collection: COLLECTION_NAME
-});
+    isPaid: { type: Boolean, default: false }
+}, { timestamps: true });
 
 orderSchema.pre('save', function(next) {
-    if (this.isModified('payment.status')) {
-        if (this.payment.status === 'completed') {
-            this.isPaid = true;
-            this.payment.paidAt = new Date();
-            if (this.status === 'pending_payment') {
-                this.status = 'paid_pending_confirmation';
-            }
-        }
+    if (this.paymentMethod) {
+        this.paymentMethod = this.paymentMethod.toUpperCase();
     }
     next();
 });
 
-const Order = mongoose.model(DOCUMENT_NAME, orderSchema);
+const Order = mongoose.model('Order', orderSchema);
 export default Order;
+

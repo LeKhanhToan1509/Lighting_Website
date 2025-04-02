@@ -5,17 +5,19 @@ import redisClient from '../dbs/redisdb.js';
 export default class orderController {
     static createOrder = async (req, res) => {
         try {
-            const accountId = req.user._id; // Adjusted to use accountId
+            const user_id = req.user._id;
             const orderData = req.body;
-            
+            console.log(orderData);
+    
             let payment = null;
-            if (orderData.payment.method === 'TRANSFER') { // Adjusted to use nested payment method
+            if (orderData.paymentMethod === 'TRANSFER') {
                 const transactionData = {
-                    accountId, // Adjusted to use accountId
-                    amount: orderData.payment.amount, // Adjusted to use nested payment amount
+                    user_id,
+                    amount: orderData.totalPrice,
                 };
     
                 payment = await paymentService.createTransaction(transactionData);
+                console.log(payment);
                 if (!payment) {
                     throw new Error("Create transaction failed");
                 }
@@ -25,9 +27,9 @@ export default class orderController {
             }
     
             const payload = {
-                accountId, // Adjusted to use accountId
+                user_id,
                 ...orderData,
-                payment: { ...orderData.payment, transactionId: payment ? payment._id : null } // Adjusted to include transactionId
+                payment_id: payment ? payment._id : null
             };
     
             const newOrder = await orderService.createOrder(payload);
