@@ -12,7 +12,6 @@ import MBBank from './src/dbs/mbBank.js';
 dotenv.config();
 const app = express();
 
-// Initialize middleware
 app.use(cookieParser());
 app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 
@@ -30,11 +29,7 @@ app.use(morgan('dev'));
 app.use(compression());
 app.use(express.json()); 
 app.use("/uploads", express.static("uploads"));
-// app.use(express.urlencoded(
-//     {
-//         extended: true
-//     }
-// ));
+
 
 MongoDB.getMongoInstance("dev");
 
@@ -56,6 +51,5 @@ app.use((error, req, res) => {
         }
     })
 });
-
 console.log(MBBank.getTransactionsHistory());
 export default app;

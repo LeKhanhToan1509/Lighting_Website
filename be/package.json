@@ -28,7 +28,7 @@
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
-    "mbbank": "^1.5.3",
+    "mbbank": "^1.8.5",
     "minio": "^8.0.5",
     "mongoose": "^8.8.0",
     "morgan": "^1.10.0",
