@@ -3,8 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { Empty, Button, InputNumber, Divider, Modal, Radio, Space, Image, Form, Select, Spin, Alert } from 'antd';
 import { DeleteOutlined, MinusOutlined, PlusOutlined, QrcodeOutlined, CarOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
-import { deleteProduct, updateProduct } from '../../redux/apiRequest';
-import { removeAllProduct } from '../../redux/apiRequest';
+import { deleteProduct, updateProduct, removeAllProduct } from '../../redux/apiRequest';
 import { message, Popconfirm } from 'antd';
 import axiosInstance from '../../axiosInstance';
 import { provinces, districtData } from '../../data/city';
@@ -27,14 +26,14 @@ const Cart = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [qrStep, setQrStep] = useState(false);
-  const [description, setDescription] = useState("");
+  const [description, setDescription] = useState('');
   const [orderId, setOrderId] = useState('');
   const [paymentId, setPaymentId] = useState('');
   const [paymentStatus, setPaymentStatus] = useState({
     loading: false,
     success: false,
     error: false,
-    message: ''
+    message: '',
   });
 
   const confirm = () => {
@@ -46,9 +45,11 @@ const Cart = () => {
   }, [cartItems]);
 
   useEffect(() => {
-    qrStep === true && setQrCode(`https://img.vietqr.io/image/${bankId}-${accNo}-${template}.png?amount=${totalPrice}&addInfo=${description}`);
+    if (qrStep) {
+      setQrCode(`https://img.vietqr.io/image/${bankId}-${accNo}-${template}.png?amount=${totalPrice}&addInfo=${description}`);
+    }
   }, [totalPrice, bankId, accNo, template, qrStep, description]);
-  
+
   useEffect(() => {
     if (user && user.acc && user.acc._id) {
       fetchUserData();
@@ -58,9 +59,9 @@ const Cart = () => {
   const fetchUserData = async () => {
     try {
       setLoading(true);
-      const response = await axiosInstance.get(`/user/get_detail_user/${user.acc._id}`);
+      const response = await axiosInstance.get(`/user/${user.acc._id}`);
       const currentUser = response.data.user[0];
-      
+
       if (currentUser) {
         setDefaultAddress({
           firstName: currentUser.firstName,
@@ -77,8 +78,8 @@ const Cart = () => {
         });
       }
     } catch (error) {
-      console.error("Error fetching user data:", error);
-      message.error("Không thể tải thông tin người dùng. Vui lòng thử lại sau.");
+      console.error('Error fetching user data:', error);
+      message.error('Không thể tải thông tin người dùng. Vui lòng thử lại sau.');
     } finally {
       setLoading(false);
     }
@@ -88,17 +89,17 @@ const Cart = () => {
     const fetchPaymentData = async () => {
       try {
         const response = await axiosInstance.get(`/payment/${paymentId}`, {}, {
-          headers : {
-            'token': `Bearer ${user.accessToken}`
-          }
+          headers: {
+            token: `Bearer ${user.accessToken}`,
+          },
         });
         setDescription(response?.data?.transactions?.description);
         return response.data;
       } catch (error) {
-        console.error("Error fetching payment data:", error);
+        console.error('Error fetching payment data:', error);
       }
     };
-    if(paymentId){
+    if (paymentId) {
       fetchPaymentData();
       setQrStep(true);
     }
@@ -106,58 +107,64 @@ const Cart = () => {
 
   const calculateTotal = () => {
     const total = cartItems.reduce((sum, item) => {
-      return sum + (item.price * item.quantity);
+      return sum + item.price * item.quantity;
     }, 0);
     setTotalPrice(total);
   };
 
   const incrementQuantity = (item) => {
     const existingCartItem = cartItems.find(
-        (cartItem) => cartItem.id === item.id && cartItem.color === item.color
+      (cartItem) => cartItem.id === item.id && cartItem.color === item.color
     );
 
     if (existingCartItem) {
-        updateProduct(
-            {
-                id: existingCartItem._id,
-                color: existingCartItem.color,
-                quantity: existingCartItem.quantity + 1
-            },
-            dispatch
-        );
+      updateProduct(
+        {
+          id: existingCartItem._id,
+          color: existingCartItem.color,
+          quantity: existingCartItem.quantity + 1,
+        },
+        dispatch
+      );
     }
   };
 
   const decrementQuantity = (item) => {
     const existingCartItem = cartItems.find(
-        (cartItem) => cartItem.id === item.id && cartItem.color === item.color
+      (cartItem) => cartItem.id === item.id && cartItem.color === item.color
     );
 
     if (existingCartItem && existingCartItem.quantity > 1) {
-        updateProduct(
-            {
-                id: existingCartItem._id,
-                color: existingCartItem.color,
-                quantity: existingCartItem.quantity - 1
-            },
-            dispatch
-        );
+      updateProduct(
+        {
+          id: existingCartItem._id,
+          color: existingCartItem.color,
+          quantity: existingCartItem.quantity - 1,
+        },
+        dispatch
+      );
     }
   };
 
   const updateQuantity = (item, value) => {
-    updateProduct({
-      id: item._id,
-      color: item.color,
-      quantity: value
-    }, dispatch);
+    updateProduct(
+      {
+        id: item._id,
+        color: item.color,
+        quantity: value,
+      },
+      dispatch
+    );
   };
 
   const removeItem = (item) => {
-    deleteProduct({
-      id: item._id,
-      color: item.color
-    }, dispatch);
+    deleteProduct(
+      {
+        id: item._id,
+        color: item.color,
+      },
+      dispatch
+    );
   };
 
   const showModal = () => {
@@ -170,35 +177,60 @@ const Cart = () => {
   };
 
   const handleOk = () => {
-    form.validateFields().then(async (values) => {
-      const orderData = {
-        items: cartItems,
-        totalPrice: totalPrice,
-        paymentMethod: paymentMethod.toUpperCase(),
-        addressType: addressType,
-        address: values,
-      };
-      const res = await axiosInstance.post('/orders/create', orderData, {
-        headers: {
-          'token': `Bearer ${user.accessToken}`
-        }
-      });      
-      setOrderId(res.data.order._id)
-      setPaymentId(res.data.order.payment_id)
+    form
+      .validateFields()
+      .then(async (values) => {
+        // Kiểm tra và bổ sung type cho mỗi item
+        const updatedItems = cartItems.map((item) => ({
+          ...item,
+          type: item.type || 'product-selling', // Giá trị mặc định nếu type thiếu
+        }));
 
-      if (paymentMethod === 'transfer') {
-        showQrCodeModal();
-      } else {
-        message.success('Đơn hàng COD của bạn đã được tạo thành công!');
-        removeAllProduct(dispatch);
-      }
-      setIsModalVisible(false);
-    }).catch(errorInfo => {
-      console.log('Validate Failed:', errorInfo);
-    });
+        const orderData = {
+          items: updatedItems.map((item) => ({
+            _id: item._id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            type: item.type, // Đảm bảo type được gửi
+            color: item.color,
+          })),
+          totalPrice: totalPrice,
+          paymentMethod: paymentMethod.toUpperCase(),
+          addressType: addressType,
+          address: values,
+        };
+
+        console.log('Sending order data:', orderData);
+
+        try {
+          const res = await axiosInstance.post('/orders/create', orderData, {
+            headers: {
+              token: `Bearer ${user.accessToken}`,
+            },
+          });
+
+          setOrderId(res.data.order._id);
+          setPaymentId(res.data.order.payment_id);
+
+          if (paymentMethod === 'transfer') {
+            showQrCodeModal();
+          } else {
+            message.success('Đơn hàng COD của bạn đã được tạo thành công!');
+            removeAllProduct(dispatch);
+          }
+          setIsModalVisible(false);
+        } catch (error) {
+          console.error('Error creating order:', error);
+          message.error(error.response?.data?.message || 'Không thể tạo đơn hàng. Vui lòng thử lại.');
+        }
+      })
+      .catch((errorInfo) => {
+        console.log('Validate Failed:', errorInfo);
+      });
   };
 
-  const handleCancel = async () => {
+  const handleCancel = () => {
     setIsModalVisible(false);
   };
 
@@ -212,21 +244,25 @@ const Cart = () => {
     setPaymentStatus({ loading: true, success: false, error: false, message: '' });
 
     try {
-      const res = await axiosInstance.post(`/payment/ispaid`, {
-        'transactionId': paymentId,
-        'amount': totalPrice
-      }, {
-        headers: {
-          token: `Bearer ${user.accessToken}`
+      const res = await axiosInstance.post(
+        `/payment/ispaid`,
+        {
+          transactionId: paymentId,
+          amount: totalPrice,
+        },
+        {
+          headers: {
+            token: `Bearer ${user.accessToken}`,
+          },
         }
-      });
+      );
 
       if (res.data.status.status === 'pending') {
         setPaymentStatus({
           loading: false,
           success: false,
           error: true,
-          message: 'Thanh toán chưa được xác nhận. Vui lòng thử lại sau.'
+          message: 'Thanh toán chưa được xác nhận. Vui lòng thử lại sau.',
         });
 
         setTimeout(() => {
@@ -239,7 +275,7 @@ const Cart = () => {
           loading: false,
           success: true,
           error: false,
-          message: 'Thanh toán thành công!'
+          message: 'Thanh toán thành công!',
         });
 
         setTimeout(() => {
@@ -252,7 +288,7 @@ const Cart = () => {
         loading: false,
         success: false,
         error: true,
-        message: 'Đã có lỗi xảy ra. Vui lòng thử lại.'
+        message: 'Đã có lỗi xảy ra. Vui lòng thử lại.',
       });
 
       setTimeout(() => {
@@ -262,21 +298,29 @@ const Cart = () => {
   };
 
   const handleQrCancel = async () => {
-    await axiosInstance.post(`/orders/delete/${orderId}`, {}, {
-      headers: { 
-        token: `Bearer ${user.accessToken}`
-      }
-    });
+    try {
+      await axiosInstance.post(
+        `/orders/delete/${orderId}`,
+        {},
+        {
+          headers: {
+            token: `Bearer ${user.accessToken}`,
+          },
+        }
+      );
+    } catch (error) {
+      console.error('Error deleting order:', error);
+    }
     setIsQrModalVisible(false);
   };
 
-  const onPaymentMethodChange = e => {
+  const onPaymentMethodChange = (e) => {
     setPaymentMethod(e.target.value);
   };
 
-  const onAddressTypeChange = e => {
+  const onAddressTypeChange = (e) => {
     setAddressType(e.target.value);
-    
+
     if (e.target.value === 'default' && defaultAddress) {
       form.setFieldsValue(defaultAddress);
     } else if (e.target.value === 'new') {
@@ -306,51 +350,66 @@ const Cart = () => {
     if (paymentStatus.error) {
       return (
         <div className="text-center space-y-4">
-          <Alert 
-            message="Thanh toán thất bại" 
-            description={paymentStatus.message} 
-            type="error" 
-            showIcon 
+          <Alert
+            message="Thanh toán thất bại"
+            description={paymentStatus.message}
+            type="error"
+            showIcon
           />
           <div className="text-center space-y-4">
-            <p>Quét mã QR để thanh toán số tiền: <strong>{totalPrice.toLocaleString()}đ</strong></p>
+            <p>
+              Quét mã QR để thanh toán số tiền: <strong>{totalPrice.toLocaleString()}đ</strong>
+            </p>
             <div className="flex justify-center">
-              <Image
-                src={qrCode}
-                alt="QR Code Payment"
-                width={250}
-              />
+              <Image src={qrCode} alt="QR Code Payment" width={250} />
             </div>
             <div className="bg-gray-50 p-4 rounded-md text-left">
-              <p className="text-sm"><strong>Thông tin chuyển khoản:</strong></p>
-              <p className="text-sm">Ngân hàng: <strong>MBBank</strong></p>
-              <p className="text-sm">Số tài khoản: <strong>{accNo}</strong></p>
-              <p className="text-sm">Nội dung: <strong>Thanh toán đơn hàng {orderId}</strong></p>
+              <p className="text-sm">
+                <strong>Thông tin chuyển khoản:</strong>
+              </p>
+              <p className="text-sm">
+                Ngân hàng: <strong>MBBank</strong>
+              </p>
+              <p className="text-sm">
+                Số tài khoản: <strong>{accNo}</strong>
+              </p>
+              <p className="text-sm">
+                Nội dung: <strong>Thanh toán đơn hàng {orderId}</strong>
+              </p>
             </div>
-            <p className="text-red-500 text-sm">* Đơn hàng sẽ được xử lý sau khi xác nhận thanh toán.</p>
+            <p className="text-red-500 text-sm">
+              * Đơn hàng sẽ được xử lý sau khi xác nhận thanh toán.
+            </p>
           </div>
         </div>
       );
     }
 
-    // Default QR code view
     return (
       <div className="text-center space-y-4">
-        <p>Quét mã QR để thanh toán số tiền: <strong>{totalPrice.toLocaleString()}đ</strong></p>
+        <p>
+          Quét mã QR để thanh toán số tiền: <strong>{totalPrice.toLocaleString()}đ</strong>
+        </p>
         <div className="flex justify-center">
-          <Image
-            src={qrCode}
-            alt="QR Code Payment"
-            width={250}
-          />
+          <Image src={qrCode} alt="QR Code Payment" width={250} />
         </div>
         <div className="bg-gray-50 p-4 rounded-md text-left">
-          <p className="text-sm"><strong>Thông tin chuyển khoản:</strong></p>
-          <p className="text-sm">Ngân hàng: <strong>MBBank</strong></p>
-          <p className="text-sm">Số tài khoản: <strong>{accNo}</strong></p>
-          <p className="text-sm">Nội dung: <strong>Thanh toán đơn hàng {orderId}</strong></p>
+          <p className="text-sm">
+            <strong>Thông tin chuyển khoản:</strong>
+          </p>
+          <p className="text-sm">
+            Ngân hàng: <strong>MBBank</strong>
+          </p>
+          <p className="text-sm">
+            Số tài khoản: <strong>{accNo}</strong>
+          </p>
+          <p className="text-sm">
+            Nội dung: <strong>Thanh toán đơn hàng {orderId}</strong>
+          </p>
         </div>
-        <p className="text-red-500 text-sm">* Đơn hàng sẽ được xử lý sau khi xác nhận thanh toán.</p>
+        <p className="text-red-500 text-sm">
+          * Đơn hàng sẽ được xử lý sau khi xác nhận thanh toán.
+        </p>
       </div>
     );
   };
@@ -362,11 +421,9 @@ const Cart = () => {
           <h1 className="text-2xl font-bold text-center mb-8">Giỏ hàng của bạn</h1>
           <Empty
             image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description={
-              <span className="text-gray-500 text-lg">Giỏ hàng của bạn đang trống</span>
-            }
+            description={<span className="text-gray-500 text-lg">Giỏ hàng của bạn đang trống</span>}
           >
-            <div className='flex flex-col items-center'>
+            <div className="flex flex-col items-center">
               <Link to="/shop">
                 <Button type="primary" size="large" className="mt-4">
                   Tiếp tục mua sắm
@@ -388,7 +445,7 @@ const Cart = () => {
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
         <h1 className="text-3xl font-bold text-center mb-8">Giỏ hàng của bạn</h1>
-        
+
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="lg:w-2/3 bg-white rounded-lg shadow-sm p-6">
             <div className="flex justify-between items-center mb-6">
@@ -403,11 +460,14 @@ const Cart = () => {
                 <Button danger>Xóa Tất Cả</Button>
               </Popconfirm>
             </div>
-            
+
             {cartItems.map((item) => (
-              <div key={`${item.id}-${item.color}`} className="flex flex-col sm:flex-row py-6 border-b border-gray-200">
+              <div
+                key={`${item.id}-${item.color}`}
+                className="flex flex-col sm:flex-row py-6 border-b border-gray-200"
+              >
                 <div className="sm:w-1/4 mb-4 sm:mb-0">
-                  <img 
+                  <img
                     src={item.images ? item.images[item.color.indexOf(item.color)] : ''}
                     alt={item.name}
                     className="w-full h-32 object-cover rounded-md"
@@ -416,33 +476,20 @@ const Cart = () => {
                     }}
                   />
                 </div>
-                
+
                 <div className="sm:w-3/4 sm:pl-6 flex flex-col justify-between">
                   <div className="flex justify-between mb-2">
                     <h3 className="text-lg font-medium">{item.name}</h3>
-                    <Button 
-                      type="text" 
-                      danger 
-                      icon={<DeleteOutlined />}
-                      onClick={() => removeItem(item)}
-                    />
+                    <Button type="text" danger icon={<DeleteOutlined />} onClick={() => removeItem(item)} />
                   </div>
-                  
-                  {item.color && (
-                    <p className="text-sm text-gray-500 mb-2">
-                      Màu: {item.color}
-                    </p>
-                  )}
-                  
-                  {item.size && (
-                    <p className="text-sm text-gray-500 mb-2">
-                      Size: {item.size}
-                    </p>
-                  )}
-                  
+
+                  {item.color && <p className="text-sm text-gray-500 mb-2">Màu: {item.color}</p>}
+
+                  {item.size && <p className="text-sm text-gray-500 mb-2">Size: {item.size}</p>}
+
                   <div className="flex justify-between items-center mt-4">
                     <div className="flex items-center border border-gray-300 rounded-md">
-                      <Button 
+                      <Button
                         type="text"
                         icon={<MinusOutlined />}
                         onClick={() => decrementQuantity(item)}
@@ -456,7 +503,7 @@ const Cart = () => {
                         controls={false}
                         className="w-12 text-center border-0"
                       />
-                      <Button 
+                      <Button
                         type="text"
                         icon={<PlusOutlined />}
                         onClick={() => incrementQuantity(item)}
@@ -471,11 +518,11 @@ const Cart = () => {
               </div>
             ))}
           </div>
-          
+
           <div className="lg:w-1/3">
             <div className="bg-white rounded-lg shadow-sm p-6 sticky top-24">
               <h2 className="text-xl font-semibold mb-6">Tổng đơn hàng</h2>
-              
+
               <div className="space-y-4 mb-6">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Tạm tính</span>
@@ -486,17 +533,17 @@ const Cart = () => {
                   <span>Miễn phí</span>
                 </div>
               </div>
-              
+
               <Divider />
-              
+
               <div className="flex justify-between mb-6">
                 <span className="text-lg font-semibold">Tổng cộng</span>
                 <span className="text-lg font-bold">{totalPrice.toLocaleString()}đ</span>
               </div>
-              
-              <Button 
-                type="primary" 
-                size="large" 
+
+              <Button
+                type="primary"
+                size="large"
                 block
                 className="mb-4"
                 onClick={showModal}
@@ -504,7 +551,7 @@ const Cart = () => {
               >
                 Thanh toán ngay
               </Button>
-              
+
               <Link to="/shop">
                 <Button size="large" block>
                   Tiếp tục mua sắm
@@ -528,7 +575,7 @@ const Cart = () => {
           <div className="space-y-6">
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Địa chỉ giao hàng</h3>
-              
+
               {defaultAddress && (
                 <Radio.Group onChange={onAddressTypeChange} value={addressType}>
                   <Space direction="vertical">
@@ -541,7 +588,7 @@ const Cart = () => {
                   </Space>
                 </Radio.Group>
               )}
-              
+
               <div className="space-y-3 mt-4">
                 <div className="flex gap-4">
                   <Form.Item
@@ -569,7 +616,7 @@ const Cart = () => {
                     />
                   </Form.Item>
                 </div>
-                
+
                 <div className="flex gap-4">
                   <Form.Item
                     name="email"
@@ -577,7 +624,7 @@ const Cart = () => {
                     className="w-1/2"
                     rules={[
                       { required: true, message: 'Vui lòng nhập email!' },
-                      { type: 'email', message: 'Email không hợp lệ!' }
+                      { type: 'email', message: 'Email không hợp lệ!' },
                     ]}
                   >
                     <input
@@ -599,7 +646,7 @@ const Cart = () => {
                     />
                   </Form.Item>
                 </div>
-                
+
                 <Form.Item
                   name="addressLine1"
                   label="Địa chỉ"
@@ -611,7 +658,7 @@ const Cart = () => {
                     placeholder="Nhập địa chỉ chi tiết"
                   />
                 </Form.Item>
-                
+
                 <div className="flex gap-4">
                   <Form.Item
                     name="province"
@@ -620,12 +667,14 @@ const Cart = () => {
                     rules={[{ required: true, message: 'Vui lòng chọn tỉnh/thành!' }]}
                   >
                     <Select placeholder="Chọn tỉnh/thành">
-                      <Option value="Hà Nội">Hà Nội</Option>
-                      <Option value="TP HCM">TP HCM</Option>
-                      {/* Add more provinces as needed */}
+                      {provinces.map((province) => (
+                        <Option key={province} value={province}>
+                          {province}
+                        </Option>
+                      ))}
                     </Select>
                   </Form.Item>
-                  
+
                   <Form.Item
                     name="district"
                     label="Quận/Huyện"
@@ -633,12 +682,14 @@ const Cart = () => {
                     rules={[{ required: true, message: 'Vui lòng chọn quận/huyện!' }]}
                   >
                     <Select placeholder="Chọn quận/huyện">
-                      <Option value="Quận 1">Quận 1</Option>
-                      <Option value="Quận 2">Quận 2</Option>
-                      
+                      {districtData[form.getFieldValue('province')]?.map((district) => (
+                        <Option key={district} value={district}>
+                          {district}
+                        </Option>
+                      ))}
                     </Select>
                   </Form.Item>
-                  
+
                   <Form.Item
                     name="ward"
                     label="Phường/Xã"
@@ -646,30 +697,20 @@ const Cart = () => {
                     rules={[{ required: true, message: 'Vui lòng chọn phường/xã!' }]}
                   >
                     <Select placeholder="Chọn phường/xã">
-                      <Option value="Phường 1">Phường 1</Option>
-                      <Option value="Phường 2">Phường 2</Option>
-                      {/* Add more wards as needed */}
+                      {/* Thêm logic để lấy danh sách phường/xã dựa trên quận/huyện */}
                     </Select>
                   </Form.Item>
                 </div>
-                
+
                 <div className="flex gap-4">
-                  <Form.Item
-                    name="postalCode"
-                    label="Mã bưu điện"
-                    className="w-1/2"
-                  >
+                  <Form.Item name="postalCode" label="Mã bưu điện" className="w-1/2">
                     <input
                       type="text"
                       className="w-full p-2 border border-gray-300 rounded-md"
                       placeholder="Nhập mã bưu điện (nếu có)"
                     />
                   </Form.Item>
-                  <Form.Item
-                    name="gender"
-                    label="Giới tính"
-                    className="w-1/2"
-                  >
+                  <Form.Item name="gender" label="Giới tính" className="w-1/2">
                     <Select placeholder="Chọn giới tính">
                       <Option value="male">Nam</Option>
                       <Option value="female">Nữ</Option>
@@ -677,11 +718,8 @@ const Cart = () => {
                     </Select>
                   </Form.Item>
                 </div>
-                
-                <Form.Item
-                  name="addressNote"
-                  label="Ghi chú (tùy chọn)"
-                >
+
+                <Form.Item name="addressNote" label="Ghi chú (tùy chọn)">
                   <textarea
                     className="w-full p-2 border border-gray-300 rounded-md"
                     rows="3"
@@ -723,7 +761,6 @@ const Cart = () => {
         </Form>
       </Modal>
 
-      {/* QR Code Modal */}
       <Modal
         title="Thanh toán chuyển khoản"
         open={isQrModalVisible}
@@ -733,7 +770,7 @@ const Cart = () => {
         cancelText="Hủy"
         confirmLoading={paymentStatus.loading}
         okButtonProps={{
-          disabled: paymentStatus.loading || paymentStatus.success
+          disabled: paymentStatus.loading || paymentStatus.success,
         }}
       >
         {renderQrModalContent()}

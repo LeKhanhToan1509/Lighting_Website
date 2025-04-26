@@ -50,7 +50,7 @@ const ProfilePage = () => {
         }
 
         const userResponse = await axiosInstance.get(
-          `/user/get_detail_user/${user.acc._id}`, 
+          `/user/${user.acc._id}`, 
           {
             headers: {
               token: `Bearer ${user.token}`
@@ -94,7 +94,7 @@ const ProfilePage = () => {
   const handleSaveProfile = async (values) => {
     try {
       const response = await axiosInstance.put(
-        `/user/get_detail_user/${user.acc._id}`, 
+        `/user/update/${user.acc._id}`, 
         values,
         {
           headers: {

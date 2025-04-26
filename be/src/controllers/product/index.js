@@ -1,7 +1,7 @@
-import { Product } from '../models/product.js';
-import { MinioClient } from '../dbs/minio.js';
-import { client } from '../dbs/elk.js';
-import { redisClient } from '../dbs/redisdb.js';
+import { Product } from '../../models/product.js';
+import { MinioClient } from '../../dbs/minio.js';
+import { client } from '../../dbs/elk.js';
+import { redisClient } from '../../dbs/redisdb.js';
 
 export class ProductController {
     static async getAllProducts(req, res) {

@@ -1,5 +1,5 @@
 import Account from "../models/account.model.js";
-import redisClient from "../dbs/redisdb.js";
+import {redisClient} from "../dbs/redisdb.js";
 import RedisKeys from "../utils/redisKeys.js";
 
 class userService {

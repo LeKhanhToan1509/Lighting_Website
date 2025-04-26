@@ -1,0 +1,34 @@
+mongo-url = "mongodb://192.168.100.65:27017/?replicaSet=rs0"
+elasticsearch-urls = ["http://elastic:9200"]
+elasticsearch-user = "elastic"
+elasticsearch-password = "txm1509"
+
+direct-read-namespaces = ["dev.products"]
+change-stream-namespaces = ["dev.products"]
+namespace-regex = "^dev\\.products$"
+
+# Giảm kích thước gói dữ liệu tối đa để phù hợp với RAM 6GB
+elasticsearch-max-bytes = 5242880  # Giảm xuống còn 5MB
+elasticsearch-max-docs = 1000      # Giảm xuống còn 1000 docs
+
+# Giảm số lượng hoạt động đồng thời
+direct-read-concur = 4             # Giảm xuống còn 4
+direct-read-split-max = 8          # Giảm xuống còn 8
+
+resume = true
+resume-name = "default"
+resume-strategy = 1
+resume-write-unsafe = false
+
+gzip = true                        # Giữ nguyên nén để tiết kiệm bộ nhớ
+index-as-update = false
+stats = true
+
+# Giảm thông tin ghi log để tiết kiệm tài nguyên
+verbose = false                    # Chuyển thành false để giảm output log
+
+exit-after-direct-reads = false
+
+[[mapping]]
+namespace = "dev.products"
+index = "products"

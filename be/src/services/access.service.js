@@ -3,7 +3,7 @@ import accessHelper from "../helpers/access.js";
 import validator from "email-validator";
 import bcrypt from 'bcryptjs';
 import { getInfoData } from "../utils/index.js";
-import redisClient from "../dbs/redisdb.js";
+import { redisClient } from "../dbs/redisdb.js";
 import jwt from "jsonwebtoken"; 
 import sendEmail from "../helpers/sendEmail.js";
 import dotenv from 'dotenv';
@@ -66,7 +66,7 @@ export default class accessService {
 
         const account = await AccountModel.findOne({ email }).lean();
         if (!account) {
-            throw new Error('Invalid username or password');
+            throw new Error('Invalid username or pa ssword');
         }
 
         const isMatch = await bcrypt.compare(password, account.password); 
@@ -79,7 +79,7 @@ export default class accessService {
         console.log(acc);
 
         const accessToken = accessHelper.generateToken(account, process.env.JWT_ACCESS_TOKEN, '2h');
-        const refreshToken = accessHelper.generateToken(account, process.env.JWT_REFRESH_TOKEN, '7d');
+        const refreshToken = accessHelper.generateToken(account, process.env.JWT_REFRESH_TOKEN, '30d');
         
         const redisRefreshKey = RedisKeys.userKey.refreshToken(account._id);
 
@@ -92,10 +92,9 @@ export default class accessService {
 
     static refresh = async (payload) => {
         const { refreshToken } = payload;
-        console.log(`refreshToken: ${refreshToken}`);
-    
+        
         if (!refreshToken) {
-            throw new Error('Unauthorized');
+            throw new Error('Refresh token is required');
         }
     
         let decoded;
@@ -108,29 +107,41 @@ export default class accessService {
             throw new Error('Invalid refresh token');
         }
     
-        console.log(`Token expires at: ${new Date(decoded.exp * 1000).toISOString()}`);
-        console.log(`Current time: ${new Date().toISOString()}`);
-    
         const account = await AccountModel.findById(decoded._id).select('_id user_name email role').lean();
         if (!account) {
             throw new Error('User not found');
         }
     
-        console.log(`account: ${JSON.stringify(account)}`);
-    
         const redisRefreshKey = RedisKeys.userKey.refreshToken(account._id);
         const storedRefreshToken = await redisClient.get(redisRefreshKey);
         
-        if (!storedRefreshToken || storedRefreshToken !== refreshToken) {
+        if (!storedRefreshToken) {
+            throw new Error('Refresh token not found in storage');
+        }
+        
+        if (storedRefreshToken !== refreshToken) {
+            // Clear the invalid token from Redis
+            await redisClient.del(redisRefreshKey);
             throw new Error('Invalid refresh token');
         }
     
+        // Generate new tokens
         const newAccessToken = accessHelper.generateToken(account, process.env.JWT_ACCESS_TOKEN, '2h');
         const newRefreshToken = accessHelper.generateToken(account, process.env.JWT_REFRESH_TOKEN, '7d');
     
+        // Store new refresh token with expiration
         await redisClient.set(redisRefreshKey, newRefreshToken, 'EX', 7 * 24 * 60 * 60);
     
-        return { newAccessToken, newRefreshToken };
+        return { 
+            newAccessToken, 
+            newRefreshToken,
+            user: {
+                _id: account._id,
+                user_name: account.user_name,
+                email: account.email,
+                role: account.role
+            }
+        };
     }
     
     static signOut = async (payload) => {

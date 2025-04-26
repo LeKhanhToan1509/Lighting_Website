@@ -1,6 +1,6 @@
 import orderService from '../services/order.service.js';
 import paymentService from '../services/payment.service.js';
-import redisClient from '../dbs/redisdb.js';
+import {redisClient} from '../dbs/redisdb.js';
 
 export default class orderController {
     static createOrder = async (req, res) => {

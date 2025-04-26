@@ -22,6 +22,7 @@ export default class accessController {
                 secure: true,   // Bắt buộc nếu dùng `SameSite=None` (Chỉ hoạt động trên HTTPS)
                 sameSite: 'None', // Cho phép cookie hoạt động trên cross-site
                 path: '/', // Đảm bảo cookie áp dụng cho toàn bộ backend
+                maxAge: 30 * 24 * 60 * 60 * 1000,
             });
             
             res.status(200).json({
@@ -39,22 +40,48 @@ export default class accessController {
     static refreshToken = async (req, res) => {
         try {
             const refreshToken = req.cookies.refreshToken;
-            const {newAccessToken, newRefreshToken} = await accessService.refresh({refreshToken});
-            // console.log(`newAccessToken: ${newAccessToken}`);
-            // console.log(`newRefreshToken: ${newRefreshToken}`);
+            if (!refreshToken) {
+                return res.status(401).json({
+                    message: 'Refresh token is required'
+                });
+            }
+
+            const {newAccessToken, newRefreshToken, user} = await accessService.refresh({refreshToken});
+            
             res.cookie('refreshToken', newRefreshToken, {
-                httpOnly: true,  // Ngăn chặn JavaScript đọc cookie
-                secure: true,   // Bắt buộc nếu dùng `SameSite=None`
+                httpOnly: true,
+                secure: true,
+                sameSite: 'None',
                 path: '/',
+                maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
             });
             
             res.status(200).json({
                 message: 'Refresh token successfully',
-                accessToken: newAccessToken
+                accessToken: newAccessToken,
+                user
             });
         } catch(error) {
+            console.error('Refresh token error:', error);
+            
+            // Clear invalid refresh token cookie
+            res.clearCookie('refreshToken', {
+                httpOnly: true,
+                secure: true,
+                sameSite: 'None',
+                path: '/'
+            });
+
+            if (error.message === 'Refresh token expired' || 
+                error.message === 'Invalid refresh token' ||
+                error.message === 'Refresh token not found in storage') {
+                return res.status(401).json({
+                    message: error.message
+                });
+            }
+
             res.status(500).json({
-                message: error.message || 'Refresh token failed'
+                message: 'Internal server error'
             });
         }
     }

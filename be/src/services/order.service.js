@@ -1,7 +1,7 @@
 import Order from '../models/order.model.js';
 import Account from '../models/account.model.js';
 import PaymentModel from '../models/payment.model.js';
-import redisClient from '../dbs/redisdb.js';
+import {redisClient} from '../dbs/redisdb.js';
 import RedisKeys from '../utils/redisKeys.js';
 
 export default class orderService {

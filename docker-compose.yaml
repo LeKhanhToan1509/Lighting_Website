@@ -6,6 +6,7 @@ services:
       - "27017:27017"
     volumes:
       - ./data:/data/db
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
     networks:
       - mynetwork
   redis:
@@ -33,20 +34,51 @@ services:
     networks:
       - mynetwork
 
-  # fe_light_store:
-  #   build:
-  #     context: .
-  #     dockerfile: dockers/feDockerfile
-  #   container_name: fe_light_store
-  #   ports:
-  #     - "5173:5173"
-  #   command: npm run dev
-  #   environment:
-  #     - HOST=0.0.0.0
-  #   volumes:
-  #     - ./fe:/app     
-  #   networks:
-  #     - mynetwork
+  elastic:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.2
+    environment:
+      - ELASTIC_PASSWORD=txm1509
+      - KIBANA_PASSWORD=kibanapass
+      - discovery.type=single-node
+      - xpack.security.http.ssl.enabled=false
+      - cluster.routing.allocation.disk.threshold_enabled=false
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms4g -Xmx4g
+    volumes:
+      - ./elk/data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200" 
+    networks:
+      - mynetwork
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.12.2
+    environment:
+      SERVER_NAME: kibana
+      ELASTICSEARCH_HOSTS: '["http://elastic:9200"]'
+      ELASTICSEARCH_USERNAME: kibana_system
+      ELASTICSEARCH_PASSWORD: kibanapass
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elastic
+    networks:
+      - mynetwork
+
+  monstache:
+    image: rwynn/monstache:6.7.5
+    container_name: monstache_lights_store
+    depends_on:
+      - mongodb
+      - elastic
+      - kibana
+    volumes:
+      - ./monstache/config.toml:/config.toml
+    command: ["-f", "/config.toml"]
+    networks:
+      - mynetwork
+
+
 
 networks:
   mynetwork:

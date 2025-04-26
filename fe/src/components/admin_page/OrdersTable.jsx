@@ -294,7 +294,11 @@ const OrdersTable = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const orderData = await axiosInstance.get('/orders/all');
+        const orderData = await axiosInstance.get('/orders/all', {
+          headers: {
+            token: `Bearer ${user?.accessToken}`
+          }
+        });
         setOrders(orderData.data.orders);
         setFilteredOrders(orderData.data.orders);
       } catch (error) {
@@ -305,7 +309,7 @@ const OrdersTable = () => {
       }
     };
     fetchOrders();
-  }, []);
+  }, [user]);
 
   // Date range filter handler
   const handleDateRangeChange = (dates) => {

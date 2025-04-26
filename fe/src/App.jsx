@@ -20,6 +20,7 @@ import ProfilePage from "./components/client/ProfilePage";
 import OrderPage from "./components/client/OrderPage";
 import OrderDetailPage from "./components/client/OrderDetailPage";
 
+
 const PrivateRoute = ({ element }) => {
   const user = useSelector((state) => state.auth.login.currentUser);
   return user ? element : <Navigate to="/login" />;
@@ -59,12 +60,12 @@ const App = () => {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/terms_and_pricing" element={<TermAndPricy />} />
-            <Route path="/product_detail" element={<DetailProduct />} />
             <Route path="/wishlist" element={<Wishlist />} />
             <Route path="/forgot_pass" element={<ForgotPasswordPage />} />
             <Route path="/profile" element={<PrivateRoute element={<ProfilePage />} />} />
             <Route path="/orders" element={<PrivateRoute element={<OrderPage />} />} />
             <Route path="/orders/:id" element={<PrivateRoute element={<OrderDetailPage />} />} />
+            <Route path="/product_detail/:id" element={<DetailProduct />} />
           </Routes>
         </CommonLayout>
       )}

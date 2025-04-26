@@ -10,6 +10,4 @@ paymentRoutes.post('/delete/:id', paymentController.deleteTransaction);
 paymentRoutes.get('/:id', paymentController.getTransactionById);
 
 
-
-
 export default paymentRoutes;

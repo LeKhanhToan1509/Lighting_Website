@@ -14,6 +14,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@elastic/elasticsearch": "^8.17.1",
     "@namatery/multer-minio": "^1.1.2",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
@@ -22,9 +23,10 @@
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
-    "dotenv": "^16.4.5",
+    "dotenv": "^16.5.0",
     "email-validator": "^2.0.4",
     "express": "^4.21.1",
+    "express-validator": "^7.2.1",
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
@@ -38,7 +40,10 @@
     "slugify": "^1.6.6",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
-    "uuid": "^11.0.5",
+    "uuid": "^11.1.0",
     "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@faker-js/faker": "^9.7.0"
   }
 }

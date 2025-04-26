@@ -1,0 +1,213 @@
+### Test Elasticsearch APIs
+
+# 1. Search Products
+GET http://localhost:5000/elk/search
+Content-Type: application/json
+
+{
+  "query": {
+    "match": {
+      "name": "sample product"
+    }
+  },
+  "from": 0,
+  "size": 10
+}
+
+# 2. Get Colors
+GET http://localhost:5000/elk/colors
+
+# 3. Get Categories
+GET http://localhost:5000/elk/categories
+
+# 4. Suggest Search
+GET http://localhost:5000/elk/suggest
+Content-Type: application/json
+
+{
+  "text": "sam",
+  "completion": {
+    "field": "suggest"
+  }
+}
+
+# 5. Get Price Ranges
+GET http://localhost:5000/elk/price-ranges
+
+# 6. Get Trending Products
+GET http://localhost:5000/elk/trending
+
+
+# 8. Reindex Data
+POST http://localhost:5000/elk/reindex
+
+# 9. Test Elasticsearch Connection
+GET http://localhost:5000/elk/test
+
+# 10. Delete Product
+DELETE http://localhost:5000/elk/product/1
+
+### Test Access APIs
+
+# 1. Signup
+POST http://localhost:5000/signup
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "password123",
+  "name": "Test User"
+}
+
+# 2. Signin
+POST http://localhost:5000/signin
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "password123"
+}
+
+# 3. Refresh Token
+POST http://localhost:5000/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "sample_refresh_token"
+}
+
+# 4. Signout
+POST http://localhost:5000/signout
+Content-Type: application/json
+
+{
+  "refreshToken": "sample_refresh_token"
+}
+
+# 5. Reset Password
+POST http://localhost:5000/reset-password
+Content-Type: application/json
+
+{
+  "email": "test@example.com"
+}
+
+# 6. Verify Email
+POST http://localhost:5000/verify-email
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "code": "123456"
+}
+
+# 7. Verify PIN
+POST http://localhost:5000/verify-pin
+Content-Type: application/json
+
+{
+  "pin": "1234"
+}
+
+### Test User APIs
+
+# 1. Get User by ID
+GET http://localhost:5000/user/1
+
+# 2. Update User by ID
+PUT http://localhost:5000/user/1
+Content-Type: application/json
+
+{
+  "name": "Updated User",
+  "email": "updated@example.com"
+}
+
+# 3. Get All Users
+GET http://localhost:5000/user/all
+
+### Test Product APIs
+
+# 1. Get All Products
+GET http://localhost:5000/product/all
+
+# 2. Get Product by ID
+GET http://localhost:5000/product/1
+
+# 3. Create Product
+POST http://localhost:5000/product/create_product
+Content-Type: application/json
+
+{
+  "name": "New Product",
+  "price": 100,
+  "category": "Electronics"
+}
+
+# 4. Update Product by ID
+PUT http://localhost:5000/product/1
+Content-Type: application/json
+
+{
+  "name": "Updated Product",
+  "price": 150
+}
+
+# 5. Delete Product by ID
+DELETE http://localhost:5000/product/1
+
+### Test Order APIs
+
+# 1. Create Order
+POST http://localhost:5000/orders
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "quantity": 2
+}
+
+# 2. Get Order by ID
+GET http://localhost:5000/orders/1
+
+# 3. Delete Order by ID
+DELETE http://localhost:5000/orders/1
+
+# 4. Update Order by ID
+PUT http://localhost:5000/orders/1
+Content-Type: application/json
+
+{
+  "quantity": 3
+}
+
+# 5. Get User Orders
+GET http://localhost:5000/orders/user
+
+# 6. Get All Orders
+GET http://localhost:5000/orders/all
+
+### Test Payment APIs
+
+# 1. Create Payment
+POST http://localhost:5000/payment/create
+Content-Type: application/json
+
+{
+  "orderId": 1,
+  "amount": 200
+}
+
+# 2. Check Payment Status
+POST http://localhost:5000/payment/check
+Content-Type: application/json
+
+{
+  "paymentId": "sample_payment_id"
+}
+
+# 3. Delete Payment by ID
+DELETE http://localhost:5000/payment/1
+
+# 4. Get Payment by ID
+GET http://localhost:5000/payment/1

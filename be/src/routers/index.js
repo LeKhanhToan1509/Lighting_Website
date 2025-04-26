@@ -11,6 +11,6 @@ routes.use('', accessRoutes);
 routes.use('/payment', paymentRoutes);
 routes.use('/user', userRoutes);
 routes.use('/orders', orderRoutes);
-routes.use('', productRoutes);
+routes.use('/product', productRoutes);
 
 export default routes;
